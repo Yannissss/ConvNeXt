@@ -32,6 +32,10 @@ import utils
 import models.convnext
 import models.convnext_isotropic
 
+import horovod.torch as hvd
+import warnings
+warnings.filterwarnings('ignore')
+
 def str2bool(v):
     """
     Converts string to bool type; enables command line 
@@ -250,7 +254,7 @@ def main(args):
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train, sampler=sampler_train,
         batch_size=args.batch_size,
-        num_workers=args.num_workers,
+        #num_workers=args.num_workers,
         pin_memory=args.pin_mem,
         drop_last=True,
     )
@@ -259,7 +263,7 @@ def main(args):
         data_loader_val = torch.utils.data.DataLoader(
             dataset_val, sampler=sampler_val,
             batch_size=int(1.5 * args.batch_size),
-            num_workers=args.num_workers,
+            #num_workers=args.num_workers,
             pin_memory=args.pin_mem,
             drop_last=False
         )
@@ -351,6 +355,13 @@ def main(args):
         args, model_without_ddp, skip_list=None,
         get_num_layer=assigner.get_layer_id if assigner is not None else None, 
         get_layer_scale=assigner.get_scale if assigner is not None else None)
+    
+    # ADDED
+    if args.distributed:
+        optimizer = hvd.DistributedOptimizer(
+            optimizer, 
+            named_parameters = model.named_parameters(),
+            backward_passes_per_step = args.update_freq)
 
     loss_scaler = NativeScaler() # if args.use_amp is False, this won't be used
 
@@ -389,6 +400,9 @@ def main(args):
     max_accuracy = 0.0
     if args.model_ema and args.model_ema_eval:
         max_accuracy_ema = 0.0
+
+    # ADDED: Broadcast model before training
+    hvd.broadcast_parameters(model.state_dict(), root_rank=0)
 
     print("Start training for %d epochs" % args.epochs)
     start_time = time.time()

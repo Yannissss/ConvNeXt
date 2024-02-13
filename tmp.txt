@@ -1,0 +1,23 @@
+python main.py --model convnext_base --eval true \
+    --resume results/checkpoint-89.pth \
+    --input_size 224 --drop_path 0.2 \
+    --nb_classes 100 \
+    --data_path datasets/ \
+    --data_set CIFAR
+
+python -m torch.distributed.launch --nproc_per_node=4 main.py \
+--model convnext_base --drop_path 0.1 \
+--batch_size 32 --lr 4e-3 --update_freq 16 \
+--warmup_epochs 5 --epochs 90 \
+--data_set CIFAR --nb_classes 100 --disable_eval true \
+--data_path datasets/ \
+--output_dir results/
+
+
+python main.py \
+--model convnext_base --drop_path 0.1 \
+--batch_size 32 --lr 4e-3 --update_freq 16 \
+--warmup_epochs 5 --epochs 90 \
+--data_set CIFAR --nb_classes 100 --disable_eval true \
+--data_path datasets/ \
+--output_dir results/

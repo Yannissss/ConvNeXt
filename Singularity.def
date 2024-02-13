@@ -1,0 +1,6 @@
+Bootstrap: docker
+From: horovod/horovod:latest
+
+# Install the ConvNext dependencies
+%post
+  pip install tensorboardX six timm==0.4.12

@@ -20,6 +20,8 @@ import torch
 import torch.distributed as dist
 from torch._six import inf
 
+import horovod.torch as hvd
+
 from tensorboardX import SummaryWriter
 
 class SmoothedValue(object):
@@ -47,8 +49,7 @@ class SmoothedValue(object):
         if not is_dist_avail_and_initialized():
             return
         t = torch.tensor([self.count, self.total], dtype=torch.float64, device='cuda')
-        dist.barrier()
-        dist.all_reduce(t)
+        hvd.allreduce(t)
         t = t.tolist()
         self.count = int(t[0])
         self.total = t[1]
@@ -265,9 +266,11 @@ def setup_for_distributed(is_master):
 
 
 def is_dist_avail_and_initialized():
-    if not dist.is_available():
-        return False
-    if not dist.is_initialized():
+    # if not dist.is_available():
+    #     return False
+    # if not dist.is_initialized():
+    #     return False
+    if not hvd.is_initialized():
         return False
     return True
 
@@ -275,13 +278,13 @@ def is_dist_avail_and_initialized():
 def get_world_size():
     if not is_dist_avail_and_initialized():
         return 1
-    return dist.get_world_size()
+    return hvd.size()
 
 
 def get_rank():
     if not is_dist_avail_and_initialized():
         return 0
-    return dist.get_rank()
+    return hvd.rank()
 
 
 def is_main_process():
@@ -295,7 +298,12 @@ def save_on_master(*args, **kwargs):
 
 def init_distributed_mode(args):
 
-    if args.dist_on_itp:
+    if True:
+        hvd.init()
+        args.rank = hvd.rank()
+        args.gpu = hvd.local_rank()
+        args.world_size = hvd.size()
+    elif args.dist_on_itp:
         args.rank = int(os.environ['OMPI_COMM_WORLD_RANK'])
         args.world_size = int(os.environ['OMPI_COMM_WORLD_SIZE'])
         args.gpu = int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
@@ -326,9 +334,9 @@ def init_distributed_mode(args):
     args.dist_backend = 'nccl'
     print('| distributed init (rank {}): {}, gpu {}'.format(
         args.rank, args.dist_url, args.gpu), flush=True)
-    torch.distributed.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
-                                         world_size=args.world_size, rank=args.rank)
-    torch.distributed.barrier()
+    # torch.distributed.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
+    #                                      world_size=args.world_size, rank=args.rank)
+    # torch.distributed.barrier()
     setup_for_distributed(args.rank == 0)
 
 
@@ -488,6 +496,7 @@ def auto_load_model(args, model, model_without_ddp, optimizer, loss_scaler, mode
             checkpoint = torch.hub.load_state_dict_from_url(
                 args.resume, map_location='cpu', check_hash=True)
         else:
+            print(f"Trying to load {args.resume} into CPU")
             checkpoint = torch.load(args.resume, map_location='cpu')
         model_without_ddp.load_state_dict(checkpoint['model'])
         print("Resume checkpoint %s" % args.resume)
