@@ -13,11 +13,43 @@ python -m torch.distributed.launch --nproc_per_node=4 main.py \
 --data_path datasets/ \
 --output_dir results/
 
-
-python main.py \
---model convnext_base --drop_path 0.1 \
+python3 wrapper.py \
+--nodes 2 --gpus 4 --image swarm.sif \
+--partition short --reservation CHPS \
+--model convnext_tiny --drop_path 0.1 \
 --batch_size 32 --lr 4e-3 --update_freq 16 \
 --warmup_epochs 5 --epochs 90 \
---data_set CIFAR --nb_classes 100 --disable_eval true \
+--data_set CIFAR --nb_classes 100 --disable_eval false \
+--data_path datasets/ \
+--output_dir results/
+
+python3 wrapper.py \
+--nodes 10 --gpus 4 --image swarm.sif \
+--partition short --reservation CHPS \
+--model convnext_tiny --drop_path 0.1 \
+--batch_size 50 --lr 4e-3 --update_freq 2 \
+--warmup_epochs 20 --epochs 300 \
+--model_ema true --model_ema_decay 0.9999 --model_ema_eval true \
+--data_set IMNET --disable_eval false \
+--data_path /scratch_p/lhollard/imagenet/ \
+--output_dir results \
+
+python3 wrapper.py \
+--nodes 4 --gpus 4 --image swarm.sif \
+--partition short --reservation CHPS \
+--model convnext_tiny --drop_path 0.1 \
+--batch_size 32 --lr 4e-3 --update_freq 16 \
+--warmup_epochs 5 --epochs 90 \
+--data_set CIFAR --nb_classes 100 --disable_eval false \
+--data_path datasets/ \
+--output_dir results/
+
+python3 wrapper.py \
+--nodes 8 --gpus 4 --image swarm.sif \
+--partition short --reservation CHPS \
+--model convnext_tiny --drop_path 0.1 \
+--batch_size 32 --lr 4e-3 --update_freq 4 \
+--warmup_epochs 5 --epochs 90 \
+--data_set CIFAR --nb_classes 100 --disable_eval false \
 --data_path datasets/ \
 --output_dir results/

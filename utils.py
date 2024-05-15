@@ -449,6 +449,8 @@ def cosine_scheduler(base_value, final_value, epochs, niter_per_ep, warmup_epoch
 
     schedule = np.concatenate((warmup_schedule, schedule))
 
+    # print("toto", schedule, warmup_schedule, niter_per_ep)
+
     assert len(schedule) == epochs * niter_per_ep
     return schedule
 

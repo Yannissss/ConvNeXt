@@ -347,9 +347,10 @@ def main(args):
     if assigner is not None:
         print("Assigned values = %s" % str(assigner.values))
 
-    if args.distributed:
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=False)
-        model_without_ddp = model.module
+    # This is handled by Horovod for now
+    # if args.distributed:
+    #     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=False)
+    #     model_without_ddp = model.module
 
     optimizer = create_optimizer(
         args, model_without_ddp, skip_list=None,
