@@ -1,3 +1,47 @@
+# Wrapper Horovod for efficient multi-node training of ConvNeXt
+
+## Installation
+
+Build Singularity image:
+```bash
+# Load the singularity module
+# On ROMEO: module load singularity/3.7.1
+singularity build image.sif Singularity.def
+```
+
+You also need a Python version >= 3.6. No specific packages are required.
+
+## Usage
+
+Training on 8 nodes of 4 GPUs each, model ConvNeXt-tiny on dataset CIFAR100. Using SLURM partition 'short' with
+the reservation 'CHPS'. (Both of the arguments are optional).
+```bash
+python3 wrapper.py \
+--nodes 8 --gpus 4 --image image.sif \
+--partition short --reservation CHPS \
+--model convnext_tiny --drop_path 0.1 \
+--batch_size 32 --lr 4e-3 --update_freq 4 \
+--warmup_epochs 5 --epochs 90 \
+--data_set CIFAR --nb_classes 100 --disable_eval false \
+--data_path datasets/ \
+--output_dir results/
+```
+
+Training on 8 nodes of 4 GPUs each, model ConvNeXt-tiny on dataset ImageNet-1K.
+```bash
+python3 wrapper.py \
+--nodes 8 --gpus 4 --image swarm.sif \
+--model convnext_tiny --drop_path 0.1 \
+--batch_size 32 --lr 4e-3 --update_freq 4 \
+--warmup_epochs 20 --epochs 300 \
+--model_ema true --model_ema_decay 0.9999 --model_ema_eval true \
+--data_set IMNET --disable_eval false \
+--data_path <path_to_image_net_1k> \
+--output_dir results \
+```
+
+You can then follow the completion of the job on the console or by looking at the aggregated logging file 'job.out'.
+
 # [A ConvNet for the 2020s](https://arxiv.org/abs/2201.03545)
 
 Official PyTorch implementation of **ConvNeXt**, from the following paper:
