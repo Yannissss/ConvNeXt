@@ -1,6 +1,7 @@
 # User defined
 datasets/**
 trained/**
+stash/**
 *.sif
 
 # Byte-compiled / optimized / DLL files
